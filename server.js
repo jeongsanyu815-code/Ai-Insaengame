@@ -28,10 +28,12 @@ ${history}
 ${choice}
 
 다음을 생성하세요:
+
 1. 새로운 이야기
 2. 다음 선택지 3개
 
-반드시 JSON 형식으로:
+반드시 JSON 형식으로 대답:
+
 {
   "story": "내용",
   "choices": ["선택1", "선택2", "선택3"]
@@ -39,36 +41,58 @@ ${choice}
 `;
 
     const response = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
+
       messages: [
         {
           role: "user",
           content: prompt,
         },
       ],
+
       temperature: 0.9,
     });
 
     const text = response.choices[0].message.content;
 
+    console.log("AI 응답:");
+    console.log(text);
+
     let parsed;
 
     try {
       parsed = JSON.parse(text);
-    } catch {
+    } catch (e) {
       parsed = {
-        story: text,
-        choices: ["계속한다", "다른 길을 간다", "포기한다"],
+        story: text || "AI 응답 오류",
+        choices: [
+          "계속한다",
+          "다른 길을 간다",
+          "포기한다",
+        ],
       };
     }
 
     res.json(parsed);
+
   } catch (err) {
+
+    console.error("서버 오류:");
     console.error(err);
-    res.status(500).json({ error: "AI 오류 발생" });
+
+    res.status(500).json({
+      story: "서버 오류 발생",
+      choices: [
+        "다시 시도",
+        "처음으로",
+        "종료"
+      ]
+    });
   }
 });
 
-app.listen(3000, () => {
-  console.log("서버 실행중");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`서버 실행중: ${PORT}`);
 });
